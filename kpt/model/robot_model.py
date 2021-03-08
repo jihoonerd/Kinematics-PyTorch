@@ -34,28 +34,30 @@ class RobotModel:
         root_global_position = self.cur_motion[[self.root_name + '_' + pos for pos in self.kinematic_chain[self.root_name]['channels'][:3]]]
         root_global_rotation = self.cur_motion[[self.root_name + '_' + rot for rot in ['Xrotation', 'Yrotation', 'Zrotation']]]
         root_glboal_position_val = torch.Tensor(np.expand_dims(root_global_position.values, axis=0))
-        root_rotation_val = euler_angles_to_matrix(torch.Tensor(root_global_rotation.values), self._kinematic_chain[self.root_name]['channel_order'])
+        root_rotation_val = euler_angles_to_matrix(torch.Tensor(root_global_rotation.values), 'ZYX')
 
         # Set root node's position and rotation
         self._kinematic_chain[self.root_name]['p'] = root_glboal_position_val.T
         self._kinematic_chain[self.root_name]['R'] = root_rotation_val
 
+
+    def get_R_offset(self, joint):
         # Set rotations
-        for joint in list(self._kinematic_chain.keys()):
-            if joint is self.root_name: continue
-            if not joint.endswith('Nub'):
-                rot_cols = [joint + '_' + channel for channel in ['Xrotation', 'Yrotation', 'Zrotation']]
-                rot_val = euler_angles_to_matrix(torch.Tensor(self.cur_motion[rot_cols].values), self._kinematic_chain[joint]['channel_order'])
-                self.kinematic_chain[joint]['R'] = rot_val
+        if not joint.endswith('Nub'):
+            return torch.eye(3)
+        rot_cols = [joint + '_' + channel for channel in ['Xrotation', 'Yrotation', 'Zrotation']]
+        rot_val = euler_angles_to_matrix(torch.Tensor(self.cur_motion[rot_cols].values), 'ZYX')
+        return rot_val
     
     def forward_kinematics(self, joint_name):
         """Solve forward kinematics from given joint name."""
         if not self._kinematic_chain[joint_name]: # For end of kinematic chain.
             return None
         
-        if joint_name is not self.root_name:
+        if (joint_name is not self.root_name) and (not joint_name.endswith('Nub')):
             parent = self._kinematic_chain[joint_name]['parent']
             self._kinematic_chain[joint_name]['p'] = torch.matmul(self._kinematic_chain[parent]['R'], self._kinematic_chain[joint_name]['offsets']) + self._kinematic_chain[parent]['p']
+            self._kinematic_chain[joint_name]['R'] = torch.matmul(self._kinematic_chain[parent]['R'], self.get_R_offset(joint_name))
         
         for child_name in self._kinematic_chain[joint_name]['children']:
             self.forward_kinematics(child_name)
@@ -64,6 +66,7 @@ class RobotModel:
         
         positions = []
         for joint in self.kinematic_chain:
-            positions.append(self.kinematic_chain[joint]['p'].numpy())
+            if not joint.endswith('Nub'):
+                positions.append(self.kinematic_chain[joint]['p'].numpy())
         position_arr = np.array(positions)
         return position_arr.squeeze()
