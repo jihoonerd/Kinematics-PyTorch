@@ -18,3 +18,13 @@ def test_bvh_robot_model():
 
     assert np.array_equal(time0_chain['RightUpLeg']['p'].numpy(), (time0_chain['RHipJoint']['p'] + time0_chain['RightUpLeg']['offsets']).numpy())
     assert np.array_equal(time50_chain['RightUpLeg']['p'].numpy(), (time50_chain['RHipJoint']['p'] + time50_chain['RightUpLeg']['offsets']).numpy())
+
+def test_export_position():
+    path = 'sample_data/bvh/01_01.bvh'
+    bvh_model = BVHModel(path)
+    robot_model = RobotModel(bvh_model)
+    robot_model.set_frame(0)
+    robot_model.forward_kinematics(robot_model.root_name)
+    positions = robot_model.export_positions()
+    
+    assert positions.shape == (38,3)

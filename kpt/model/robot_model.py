@@ -59,3 +59,11 @@ class RobotModel:
         
         for child_name in self._kinematic_chain[joint_name]['children']:
             self.forward_kinematics(child_name)
+
+    def export_positions(self):
+        
+        positions = []
+        for joint in self.kinematic_chain:
+            positions.append(self.kinematic_chain[joint]['p'].numpy())
+        position_arr = np.array(positions)
+        return position_arr.squeeze()
