@@ -6,3 +6,8 @@ def test_bvh_model():
     bvh_model = BVHModel(path)
     kinematic_chain = bvh_model.get_kinematic_chain()
     print(kinematic_chain)
+
+
+def test_forward_kinematics():
+    # b, r, q input
+    pass
