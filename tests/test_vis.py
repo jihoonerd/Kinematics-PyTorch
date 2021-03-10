@@ -18,7 +18,7 @@ def test_scatter_animation():
     bvh_model = BVHModel(path)
     robot_model = RobotModel(bvh_model)
 
-    total_sequence = 1200
+    total_sequence = 1500
     position_arrs = []
     for i in range(total_sequence):
         robot_model.set_frame(i)
@@ -28,3 +28,11 @@ def test_scatter_animation():
     position_arrs = np.stack(position_arrs)
     scatter_animation(position_arrs, 'test_viz.mp4')
 
+def test_reference():
+    import pandas as pd
+    df = pd.read_csv('assets/cmu_01_01_pos.csv')
+    position_arrs = []
+    for i in range(len(df)):
+        position_arrs.append(df.iloc[i].values.reshape((-1,3)))
+    position_arrs = np.stack(position_arrs)
+    scatter_animation(position_arrs, 'reference_01_01.mp4')

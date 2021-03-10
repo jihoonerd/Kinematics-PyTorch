@@ -22,7 +22,7 @@ class RobotModel:
             frame_id (int): [description]
         """
         self.frame_id = frame_id
-        if self.kinematic_model.model_type is 'bvh':
+        if self.kinematic_model.model_type == 'bvh':
            self._kinematic_chain = self.kinematic_model.get_kinematic_chain()
            channel_order = self._kinematic_chain[self.kinematic_model.root_name]['channel_order']
            root_pos, root_rot = self.kinematic_model.get_root_pos_rot(frame_id, channel_order)
@@ -30,7 +30,7 @@ class RobotModel:
             raise ValueError('Undefined model type')
 
         self._kinematic_chain[self.kinematic_model.root_name]['p'] = root_pos
-        self._kinematic_chain[self.kinematic_model.root_name]['R'] = torch.eye(3)
+        self._kinematic_chain[self.kinematic_model.root_name]['R'] = root_rot
         
     
     def forward_kinematics(self, joint_name):

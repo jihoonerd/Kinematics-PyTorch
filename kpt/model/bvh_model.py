@@ -5,6 +5,7 @@ import torch
 from kpt.model.kinematic_model import KinematicModel
 from pymo.parsers import BVHParser
 from pytorch3d.transforms import euler_angles_to_matrix
+from scipy.spatial.transform import Rotation
 
 
 class BVHModel(KinematicModel):
@@ -54,8 +55,12 @@ class BVHModel(KinematicModel):
         root_position = torch.Tensor(np.expand_dims(root_position_sr.values, axis=0)).T
 
         root_global_rotation_sr = cur_frame[[self.root_name + '_' + rot for rot in ['Zrotation', 'Yrotation', 'Xrotation']]]
-        root_rotation = euler_angles_to_matrix(torch.Tensor(root_global_rotation_sr.values), channel_order)
+        # root_rotation = euler_angles_to_matrix(torch.Tensor(root_global_rotation_sr.values), channel_order)
 
+        z_rot = Rotation.from_euler('z', root_global_rotation_sr[0], degrees=True).as_matrix()
+        y_rot = Rotation.from_euler('y', root_global_rotation_sr[1], degrees=True).as_matrix()
+        x_rot = Rotation.from_euler('x', root_global_rotation_sr[2], degrees=True).as_matrix()
+        root_rotation = torch.Tensor(z_rot @ y_rot @ x_rot)
         return root_position, root_rotation
     
     def get_rotation_matrix(self, frame_id: int, joint_name: str, channel_order: str):
@@ -65,6 +70,11 @@ class BVHModel(KinematicModel):
             return torch.eye(3)
 
         rot_cols = [joint_name + '_' + channel for channel in ['Zrotation', 'Yrotation', 'Xrotation']]
-        rot_mat = euler_angles_to_matrix(torch.Tensor(cur_frame[rot_cols].values/180*np.pi), channel_order) # TODO: find better way of converting radian
+        # rot_mat = euler_angles_to_matrix(torch.Tensor(cur_frame[rot_cols].values/180*np.pi), channel_order) # TODO: find better way of converting radian
+
+        z_rot = Rotation.from_euler('z', cur_frame[rot_cols].values[0], degrees=True).as_matrix()
+        y_rot = Rotation.from_euler('y', cur_frame[rot_cols].values[1], degrees=True).as_matrix()
+        x_rot = Rotation.from_euler('x', cur_frame[rot_cols].values[2], degrees=True).as_matrix()
+        rot_mat = torch.Tensor(z_rot @ y_rot @ x_rot)
         return rot_mat
 
