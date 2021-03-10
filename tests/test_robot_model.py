@@ -28,7 +28,6 @@ def test_export_position():
     bvh_model = BVHModel(path)
     robot_model = RobotModel(bvh_model)
     robot_model.set_frame(0)
-    robot_model.forward_kinematics(robot_model.root_name)
+    robot_model.forward_kinematics(robot_model.kinematic_model.root_name)
     positions = robot_model.export_positions()
-    
-    assert positions.shape == (38,3)
+    assert positions.shape == (31,3)

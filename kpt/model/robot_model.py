@@ -30,7 +30,7 @@ class RobotModel:
             raise ValueError('Undefined model type')
 
         self._kinematic_chain[self.kinematic_model.root_name]['p'] = root_pos
-        self._kinematic_chain[self.kinematic_model.root_name]['R'] = root_rot
+        self._kinematic_chain[self.kinematic_model.root_name]['R'] = torch.eye(3)
         
     
     def forward_kinematics(self, joint_name):
