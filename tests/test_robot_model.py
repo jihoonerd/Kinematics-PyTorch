@@ -1,6 +1,5 @@
 from kpt.model.robot_model import RobotModel
 from kpt.model.bvh_model import BVHModel
-import copy
 import numpy as np
 import pandas as pd
 
@@ -16,7 +15,7 @@ def test_forward_kinematics():
     for i in testing_frame:
         robot_model.set_frame(i)
         robot_model.forward_kinematics(robot_model.kinematic_model.root_name)
-        chain = copy.deepcopy(robot_model.kinematic_chain)
+        chain = robot_model.kinematic_chain
 
         for joint in robot_model.kinematic_model.joints:
             pos_cols = [joint + '_' + pos for pos in ['Xposition', 'Yposition', 'Zposition']]
@@ -30,4 +29,4 @@ def test_export_position():
     robot_model.set_frame(0)
     robot_model.forward_kinematics(robot_model.kinematic_model.root_name)
     positions = robot_model.export_positions()
-    assert positions.shape == (31,3)
+    assert positions.shape == (38,3)

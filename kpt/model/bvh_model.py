@@ -9,7 +9,10 @@ from scipy.spatial.transform import Rotation
 
 
 class BVHModel(KinematicModel):
-    """Class for parsing BVH and retrieving kinematic information."""    
+    """Class for parsing BVH and retrieving kinematic information.
+    
+    # Note that `values` of parsed data is using degree, not radian!
+    """
 
     def __init__(self, bvh_path):
         self.model_type = 'bvh'
@@ -20,8 +23,9 @@ class BVHModel(KinematicModel):
         self.skeleton = self.parsed.skeleton
         self.joints = list(self.parsed.skeleton.keys())
         self.root_name = self.parsed.root_name
+        self.kinematic_chain = self._build_kinematic_chain()
 
-    def get_kinematic_chain(self):
+    def _build_kinematic_chain(self):
         """This builds a kinematic chain from skeleton data from parsed BVH.
         
         Returns:
@@ -38,43 +42,69 @@ class BVHModel(KinematicModel):
                 joint_info['channel_order'] = ''.join([channel[0] for channel in self.parsed.skeleton[joint_name]['channels']])
             kinematic_chain[joint_name] = joint_info
         return kinematic_chain
-    
-    def get_root_pos_rot(self, frame_id: int, channel_order: str):
+
+    def get_root_pos_rot(self, frame_id: int):
         """This returns root's world coordinate and rotation matrix by given frame_id.
 
         Args:
             frame_id (int): frame id. Index starts from 0.
-            channel_order (str): channel order strings e.g.) 'XYZ', 'ZYX'
         Returns:
             root_position: Position offset (3,1) in world coordinates.
-            root_rotation: Rotation matrix in world coordinates.
+            root_rotation: Rotation matrix (3,3) in world coordinates.
         """
-
+        
         cur_frame = self.motion_data.iloc[frame_id]
         root_position_sr = cur_frame[[self.root_name + '_' + pos for pos in self.skeleton[self.root_name]['channels'][:3]]]
         root_position = torch.Tensor(np.expand_dims(root_position_sr.values, axis=0)).T
-
-        root_global_rotation_sr = cur_frame[[self.root_name + '_' + rot for rot in ['Zrotation', 'Yrotation', 'Xrotation']]]
-        # root_rotation = euler_angles_to_matrix(torch.Tensor(root_global_rotation_sr.values), channel_order)
-
-        z_rot = Rotation.from_euler('z', root_global_rotation_sr[0], degrees=True).as_matrix()
-        y_rot = Rotation.from_euler('y', root_global_rotation_sr[1], degrees=True).as_matrix()
-        x_rot = Rotation.from_euler('x', root_global_rotation_sr[2], degrees=True).as_matrix()
-        root_rotation = torch.Tensor(z_rot @ y_rot @ x_rot)
+        channel_order = self.kinematic_chain[self.root_name]['channel_order']
+        root_rotation = self._euler_to_rotation_matrix(frame_id, self.root_name, channel_order)
         return root_position, root_rotation
     
-    def get_rotation_matrix(self, frame_id: int, joint_name: str, channel_order: str):
-        cur_frame = self.motion_data.iloc[frame_id]
+    def get_rotation_matrix(self, frame_id: int, joint_name: str):
+        """Returns rotation matrix from given joint at provided frame_id
 
-        if joint_name.endswith('Nub'):
+        Args:
+            frame_id (int): frame id. Index starts from 0.
+            joint_name (str): joint name should be defined in self.kinematic_chain
+
+        Returns:
+            rot_mat: Rotation matrix (3,3) in local coordinates.
+        """        
+        if not self.skeleton[joint_name]['children']:
             return torch.eye(3)
-
-        rot_cols = [joint_name + '_' + channel for channel in ['Zrotation', 'Yrotation', 'Xrotation']]
-        # rot_mat = euler_angles_to_matrix(torch.Tensor(cur_frame[rot_cols].values/180*np.pi), channel_order) # TODO: find better way of converting radian
-
-        z_rot = Rotation.from_euler('z', cur_frame[rot_cols].values[0], degrees=True).as_matrix()
-        y_rot = Rotation.from_euler('y', cur_frame[rot_cols].values[1], degrees=True).as_matrix()
-        x_rot = Rotation.from_euler('x', cur_frame[rot_cols].values[2], degrees=True).as_matrix()
-        rot_mat = torch.Tensor(z_rot @ y_rot @ x_rot)
+        channel_order = self.kinematic_chain[joint_name]['channel_order']
+        rot_mat = self._euler_to_rotation_matrix(frame_id, joint_name, channel_order)
         return rot_mat
 
+    def _euler_to_rotation_matrix(self, frame_id: int, joint_name: str, channel_order: str):
+        """Return rotation matrix from given joint_name and frame_id by using self.motion_data
+
+        Args:
+            frame_id (int): frame id. Index starts from 0.
+            joint_name (str): joint name should be defined in self.kinematic_chain
+            channel_order (str): multiplication order. If 'ZYX' is given, it assumes transformed vector will be: [ZYX \times v]
+
+        Raises:
+            ValueError: Check channel_order. e.g.) 'XYZ', 'ZYX'...
+
+        Returns:
+            rot_mat: transformed rotation matrix (3,3) from euler angle
+        """        
+        cur_frame = self.motion_data.iloc[frame_id]
+        rot_cols = [joint_name + '_' + channel for channel in ['Xrotation', 'Yrotation', 'Zrotation']]
+        
+        x_rot = Rotation.from_euler('x', cur_frame[rot_cols].values[0], degrees=True).as_matrix()
+        y_rot = Rotation.from_euler('y', cur_frame[rot_cols].values[1], degrees=True).as_matrix()
+        z_rot = Rotation.from_euler('z', cur_frame[rot_cols].values[2], degrees=True).as_matrix()
+
+        rot_mat = np.eye(3)
+        for axis in channel_order:
+            if axis == 'X' :
+                rot_mat = np.matmul(rot_mat, x_rot)
+            elif axis == 'Y':
+                rot_mat = np.matmul(rot_mat, y_rot)
+            elif axis == 'Z' :
+                rot_mat = np.matmul(rot_mat, z_rot)
+            else:
+                raise ValueError(f'Wrong channel order given (Capital Only): {channel_order}')
+        return torch.Tensor(rot_mat)
