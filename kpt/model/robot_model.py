@@ -14,7 +14,7 @@ class RobotModel:
         """Kinematic chain and motion sequence should be set by this method.
 
         Args:
-            frame_id (int): [description]
+            frame_id (int): Set root position and rotation at given id.
         """
         self.frame_id = frame_id
         if self.kinematic_model.model_type == 'bvh':
@@ -40,11 +40,16 @@ class RobotModel:
             self.forward_kinematics(child_name)
 
     def export_positions(self):
+        """Extract position values from kinematic chain. Returns (N, 3) shaped numpy array.
+
+        Returns:
+            position_arr: (N,3) shaped numpy array.
+        """        
         positions = []
         for joint in self.kinematic_chain:
             positions.append(self.kinematic_chain[joint]['p'].numpy())
-        position_arr = np.array(positions)
-        return position_arr.squeeze()
+        position_arr = np.array(positions).squeeze()
+        return position_arr
     
     def print_kinematic_chain(self, joint_name):
         if joint_name not in self.kinematic_chain.keys():
