@@ -53,18 +53,18 @@ class BVHModel(KinematicModel):
         root_position_sr = cur_frame[[self.root_name + '_' + pos for pos in self.skeleton[self.root_name]['channels'][:3]]]
         root_position = torch.Tensor(np.expand_dims(root_position_sr.values, axis=0)).T
 
-        root_global_rotation_sr = cur_frame[[self.root_name + '_' + rot for rot in ['Xrotation', 'Yrotation', 'Zrotation']]]
+        root_global_rotation_sr = cur_frame[[self.root_name + '_' + rot for rot in ['Zrotation', 'Yrotation', 'Xrotation']]]
         root_rotation = euler_angles_to_matrix(torch.Tensor(root_global_rotation_sr.values), channel_order)
 
         return root_position, root_rotation
     
-    def get_rotation_matrix(self, frame_id: int, joint_name: str):
+    def get_rotation_matrix(self, frame_id: int, joint_name: str, channel_order: str):
         cur_frame = self.motion_data.iloc[frame_id]
 
         if joint_name.endswith('Nub'):
             return torch.eye(3)
 
-        rot_cols = [joint_name + '_' + channel for channel in ['Xrotation', 'Yrotation', 'Zrotation']]
-        rot_mat = euler_angles_to_matrix(torch.Tensor(cur_frame[rot_cols].values/180*np.pi), 'ZYX') # TODO: find better way of converting radian
+        rot_cols = [joint_name + '_' + channel for channel in ['Zrotation', 'Yrotation', 'Xrotation']]
+        rot_mat = euler_angles_to_matrix(torch.Tensor(cur_frame[rot_cols].values/180*np.pi), channel_order) # TODO: find better way of converting radian
         return rot_mat
 

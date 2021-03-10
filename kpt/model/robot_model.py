@@ -24,7 +24,8 @@ class RobotModel:
         self.frame_id = frame_id
         if self.kinematic_model.model_type is 'bvh':
            self._kinematic_chain = self.kinematic_model.get_kinematic_chain()
-           root_pos, root_rot = self.kinematic_model.get_root_pos_rot(frame_id, 'ZYX')
+           channel_order = self._kinematic_chain[self.kinematic_model.root_name]['channel_order']
+           root_pos, root_rot = self.kinematic_model.get_root_pos_rot(frame_id, channel_order)
         else:
             raise ValueError('Undefined model type')
 
@@ -40,7 +41,8 @@ class RobotModel:
         if (joint_name is not self.kinematic_model.root_name):
             parent = self._kinematic_chain[joint_name]['parent']
             self._kinematic_chain[joint_name]['p'] = torch.matmul(self._kinematic_chain[parent]['R'], self._kinematic_chain[joint_name]['offsets']) + self._kinematic_chain[parent]['p']
-            self._kinematic_chain[joint_name]['R'] = torch.matmul(self._kinematic_chain[parent]['R'], self.kinematic_model.get_rotation_matrix(self.frame_id, joint_name))
+            channel_order = self.kinematic_chain[joint_name]['channel_order']
+            self._kinematic_chain[joint_name]['R'] = torch.matmul(self._kinematic_chain[parent]['R'], self.kinematic_model.get_rotation_matrix(self.frame_id, joint_name, channel_order))
         
         for child_name in self._kinematic_chain[joint_name]['children']:
             self.forward_kinematics(child_name)
