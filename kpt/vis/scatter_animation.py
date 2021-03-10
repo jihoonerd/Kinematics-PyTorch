@@ -9,7 +9,6 @@ def scatter_scene(array, file_name):
 
     # Initialize scatters
     scatters = [ax.scatter([x], [y], [z]) for x, y, z in array]
-    # ax.scatter(array[:,0], array[:,1], array[:,2])
     ax.set_xlabel('X')
     ax.set_xlim(-30,30)
     ax.set_ylabel('Y')
@@ -17,7 +16,7 @@ def scatter_scene(array, file_name):
     ax.set_zlabel('Z')
     ax.set_zlim(-30,30)
     ax.view_init(110, -90)
-    plt.savefig('test_image.png')
+    plt.savefig(file_name)
 
 def animate_scatters(frame, data, scatters):
     """

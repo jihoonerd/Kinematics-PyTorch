@@ -7,10 +7,21 @@ def test_scatter_plot1():
     path = 'sample_data/bvh/01_01.bvh'
     bvh_model = BVHModel(path)
     robot_model = RobotModel(bvh_model)
-    robot_model.set_frame(0)
+    for i in range(100):
+        robot_model.set_frame(i)
+        robot_model.forward_kinematics(robot_model.root_name)
+        positions = robot_model.export_positions()
+        scatter_scene(positions, f'img/test_png{i}.png')
+
+def test_scatter_plot2():
+    path = 'sample_data/bvh/01_01.bvh'
+    bvh_model = BVHModel(path)
+    robot_model = RobotModel(bvh_model)
+    robot_model.set_frame(3)
     robot_model.forward_kinematics(robot_model.root_name)
     positions = robot_model.export_positions()
-    scatter_scene(positions, 'test_png.png')
+    scatter_scene(positions, 'test_png2.png')
+
 
 def test_scatter_animation():
     path = 'sample_data/bvh/01_01.bvh'
@@ -19,7 +30,7 @@ def test_scatter_animation():
 
     total_sequence = robot_model.model.bvh_parsed.values.shape[0]
     position_arrs = []
-    for i in range(300):
+    for i in range(total_sequence):
         robot_model.set_frame(i)
         robot_model.forward_kinematics(robot_model.root_name)
         position_arr = robot_model.export_positions()
