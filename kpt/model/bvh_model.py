@@ -65,6 +65,6 @@ class BVHModel(KinematicModel):
             return torch.eye(3)
 
         rot_cols = [joint_name + '_' + channel for channel in ['Xrotation', 'Yrotation', 'Zrotation']]
-        rot_mat = euler_angles_to_matrix(torch.Tensor(cur_frame[rot_cols].values/180*np.pi), 'XYZ') # TODO: find better way of converting radian
+        rot_mat = euler_angles_to_matrix(torch.Tensor(cur_frame[rot_cols].values/180*np.pi), 'ZYX') # TODO: find better way of converting radian
         return rot_mat
 

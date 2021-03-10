@@ -24,20 +24,13 @@ class RobotModel:
         self.frame_id = frame_id
         if self.kinematic_model.model_type is 'bvh':
            self._kinematic_chain = self.kinematic_model.get_kinematic_chain()
-           root_pos, root_rot = self.kinematic_model.get_root_pos_rot(frame_id, 'XYZ')
+           root_pos, root_rot = self.kinematic_model.get_root_pos_rot(frame_id, 'ZYX')
         else:
             raise ValueError('Undefined model type')
 
         self._kinematic_chain[self.kinematic_model.root_name]['p'] = root_pos
         self._kinematic_chain[self.kinematic_model.root_name]['R'] = root_rot
-
-    def get_R_offset(self, joint):
-        # Set rotations
-        if joint.endswith('Nub'):
-            return torch.eye(3)
-        rot_cols = [joint + '_' + channel for channel in ['Xrotation', 'Yrotation', 'Zrotation']]
-        rot_val = euler_angles_to_matrix(torch.Tensor(self.cur_motion[rot_cols].values/180*np.pi), 'XYZ')
-        return rot_val
+        
     
     def forward_kinematics(self, joint_name):
         """Solve forward kinematics from given joint name."""
