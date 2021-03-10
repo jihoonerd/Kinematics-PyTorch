@@ -27,7 +27,7 @@ class BVHModel(KinematicModel):
         kinematic_chain = {}
 
         for joint in self.joints:
-            joint_info = copy.deepcopy(self.parsed.skeleton[joint])
+            joint_info = copy.deepcopy(self.parsed.skeleton[joint]) # Should use deepcopy to preserve original parsing data
             joint_info['offsets'] = torch.Tensor(np.expand_dims(joint_info['offsets'], 1)) # Offsets will have a shape of (3,1)
             if joint is self.root_name:
                 joint_info['channel_order'] = ''.join([channel[0] for channel in self.parsed.skeleton[joint]['channels']])[-3:] # Extract rotation channel only.
