@@ -6,9 +6,14 @@ from pytorch3d.transforms import euler_angles_to_matrix
 
 class RobotModel:
 
-    def __init__(self, model: KinematicModel):
-        self.model = model # Kinematic model.
+    def __init__(self, kinematic_model: KinematicModel):
+        self.kinematic_model = kinematic_model # Kinematic model.
         self._kinematic_chain = {} # Should be set from `set_frame`
+        self.frame_id = None
+
+    @property
+    def kinematic_chain(self):
+        return self._kinematic_chain
 
     def set_frame(self, frame_id: int):
         """Kinematic chain and motion sequence should be set by this method.
@@ -16,15 +21,15 @@ class RobotModel:
         Args:
             frame_id (int): [description]
         """
-
-        if self.model.type is 'bvh':
-           self._kinematic_chain = self.model.get_kinematic_chain()
-           root_pos, root_rot = self.model.get_root_pos_rot(frame_id)
+        self.frame_id = frame_id
+        if self.kinematic_model.model_type is 'bvh':
+           self._kinematic_chain = self.kinematic_model.get_kinematic_chain()
+           root_pos, root_rot = self.kinematic_model.get_root_pos_rot(frame_id, 'XYZ')
         else:
             raise ValueError('Undefined model type')
 
-        self._kinematic_chain[self.root_name]['p'] = root_pos
-        self._kinematic_chain[self.root_name]['R'] = root_rot
+        self._kinematic_chain[self.kinematic_model.root_name]['p'] = root_pos
+        self._kinematic_chain[self.kinematic_model.root_name]['R'] = root_rot
 
     def get_R_offset(self, joint):
         # Set rotations
@@ -39,16 +44,15 @@ class RobotModel:
         if not self._kinematic_chain[joint_name]: # For end of kinematic chain.
             return None
         
-        if (joint_name is not self.root_name):
+        if (joint_name is not self.kinematic_model.root_name):
             parent = self._kinematic_chain[joint_name]['parent']
-            self._kinematic_chain[joint_name]['R'] = torch.matmul(self._kinematic_chain[parent]['R'], self.get_R_offset(joint_name))
             self._kinematic_chain[joint_name]['p'] = torch.matmul(self._kinematic_chain[parent]['R'], self._kinematic_chain[joint_name]['offsets']) + self._kinematic_chain[parent]['p']
+            self._kinematic_chain[joint_name]['R'] = torch.matmul(self._kinematic_chain[parent]['R'], self.kinematic_model.get_rotation_matrix(self.frame_id, joint_name))
         
         for child_name in self._kinematic_chain[joint_name]['children']:
             self.forward_kinematics(child_name)
 
     def export_positions(self):
-        
         positions = []
         for joint in self._kinematic_chain:
             if not joint.endswith('Nub'):
@@ -56,7 +60,7 @@ class RobotModel:
         position_arr = np.array(positions)
         return position_arr.squeeze()
     
-    def print__kinematic_chain(self, joint_name):
+    def print_kinematic_chain(self, joint_name):
         if joint_name not in self._kinematic_chain.keys():
             raise KeyError("Does not have matching joint in kinematic chain.")
 

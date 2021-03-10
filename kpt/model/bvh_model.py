@@ -24,25 +24,26 @@ class BVHModel(KinematicModel):
         """This builds a kinematic chain from skeleton data from parsed BVH.
         
         Returns:
-            dict: keys: joint names, values: processed skeleton dictionary from parsed BVH
+            dict: keys: joint_name names, values: processed skeleton dictionary from parsed BVH
         """        
         kinematic_chain = {}
 
-        for joint in self.joints:
-            joint_info = copy.deepcopy(self.parsed.skeleton[joint]) # Should use deepcopy to preserve original parsing data
+        for joint_name in self.joints:
+            joint_info = copy.deepcopy(self.parsed.skeleton[joint_name]) # Should use deepcopy to preserve original parsing data
             joint_info['offsets'] = torch.Tensor(np.expand_dims(joint_info['offsets'], 1)) # Offsets will have a shape of (3,1)
-            if joint is self.root_name:
-                joint_info['channel_order'] = ''.join([channel[0] for channel in self.parsed.skeleton[joint]['channels']])[-3:] # Extract rotation channel only.
+            if joint_name is self.root_name:
+                joint_info['channel_order'] = ''.join([channel[0] for channel in self.parsed.skeleton[joint_name]['channels']])[-3:] # Extract rotation channel only.
             else:
-                joint_info['channel_order'] = ''.join([channel[0] for channel in self.parsed.skeleton[joint]['channels']])
-            kinematic_chain[joint] = joint_info
+                joint_info['channel_order'] = ''.join([channel[0] for channel in self.parsed.skeleton[joint_name]['channels']])
+            kinematic_chain[joint_name] = joint_info
         return kinematic_chain
     
     def get_root_pos_rot(self, frame_id: int, channel_order: str):
-        """This returns frame_id's world coordinate and rotation matrix in Tensor.
+        """This returns root's world coordinate and rotation matrix by given frame_id.
 
         Args:
             frame_id (int): frame id. Index starts from 0.
+            channel_order (str): channel order strings e.g.) 'XYZ', 'ZYX'
         Returns:
             root_position: Position offset (3,1) in world coordinates.
             root_rotation: Rotation matrix in world coordinates.
@@ -56,4 +57,14 @@ class BVHModel(KinematicModel):
         root_rotation = euler_angles_to_matrix(torch.Tensor(root_global_rotation_sr.values), channel_order)
 
         return root_position, root_rotation
+    
+    def get_rotation_matrix(self, frame_id: int, joint_name: str):
+        cur_frame = self.motion_data.iloc[frame_id]
+
+        if joint_name.endswith('Nub'):
+            return torch.eye(3)
+
+        rot_cols = [joint_name + '_' + channel for channel in ['Xrotation', 'Yrotation', 'Zrotation']]
+        rot_mat = euler_angles_to_matrix(torch.Tensor(cur_frame[rot_cols].values/180*np.pi), 'XYZ') # TODO: find better way of converting radian
+        return rot_mat
 
