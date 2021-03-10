@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def test_bvh_robot_model():
+def test_forward_kinematics():
     path = 'sample_data/bvh/01_01.bvh'
     bvh_model = BVHModel(path)
     robot_model = RobotModel(bvh_model)
@@ -19,14 +19,25 @@ def test_bvh_robot_model():
 
 
     df = pd.read_csv('assets/cmu_01_01_pos.csv')
-    time0_rul_pos = df.iloc[0][['RightUpLeg_Xposition', 'RightUpLeg_Yposition', 'RightUpLeg_Zposition']].values
-    np.testing.assert_almost_equal(time0_chain['RightUpLeg']['p'].numpy().squeeze(), time0_rul_pos, decimal=4)
+    for joint in robot_model.kinematic_model.joints:
+        pos_cols = [joint + '_' + pos for pos in ['Xposition', 'Yposition', 'Zposition']]
+        joint_pos = df.iloc[0][pos_cols].values
+        np.testing.assert_almost_equal(time0_chain[joint]['p'].numpy().squeeze(), joint_pos, decimal=4)
+    
+    for joint in robot_model.kinematic_model.joints:
+        pos_cols = [joint + '_' + pos for pos in ['Xposition', 'Yposition', 'Zposition']]
+        joint_pos = df.iloc[1][pos_cols].values
+        np.testing.assert_almost_equal(time0_chain[joint]['p'].numpy().squeeze(), joint_pos, decimal=4)
 
-    time50_root_pos = df.iloc[50][['Hips_Xposition', 'Hips_Yposition', 'Hips_Zposition']].values
-    np.testing.assert_almost_equal(time50_chain['Hips']['p'].numpy().squeeze(), time50_root_pos, decimal=4)
+    for joint in robot_model.kinematic_model.joints:
+        pos_cols = [joint + '_' + pos for pos in ['Xposition', 'Yposition', 'Zposition']]
+        joint_pos = df.iloc[50][pos_cols].values
+        np.testing.assert_almost_equal(time50_chain[joint]['p'].numpy().squeeze(), joint_pos, decimal=4)
 
-    time50_rul_pos = df.iloc[50][['RightUpLeg_Xposition', 'RightUpLeg_Yposition', 'RightUpLeg_Zposition']].values
-    np.testing.assert_almost_equal(time50_chain['RightUpLeg']['p'].numpy().squeeze(), time50_rul_pos, decimal=4)
+    for joint in robot_model.kinematic_model.joints:
+        pos_cols = [joint + '_' + pos for pos in ['Xposition', 'Yposition', 'Zposition']]
+        joint_pos = df.iloc[204][pos_cols].values
+        np.testing.assert_almost_equal(time50_chain[joint]['p'].numpy().squeeze(), joint_pos, decimal=4)
 
 
 def test_export_position():
