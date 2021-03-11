@@ -18,7 +18,7 @@ def test_scatter_animation():
     bvh_model = BVHModel(path)
     robot_model = RobotModel(bvh_model)
 
-    total_sequence = 1500
+    total_sequence = robot_model.kinematic_model.motion_data.shape[0]
     position_arrs = []
     for i in range(total_sequence):
         robot_model.set_frame(i)

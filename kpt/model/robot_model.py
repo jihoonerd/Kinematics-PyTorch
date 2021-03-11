@@ -17,11 +17,7 @@ class RobotModel:
             frame_id (int): Set root position and rotation at given id.
         """
         self.frame_id = frame_id
-        if self.kinematic_model.model_type == 'bvh':
-           root_pos, root_rot = self.kinematic_model.get_root_pos_rot(frame_id)
-        else:
-            raise ValueError('Undefined model type')
-
+        root_pos, root_rot = self.kinematic_model.get_root_pos_rot(frame_id)
         self.kinematic_chain[self.kinematic_model.root_name]['p'] = root_pos
         self.kinematic_chain[self.kinematic_model.root_name]['R'] = root_rot
         
