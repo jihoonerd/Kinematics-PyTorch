@@ -56,7 +56,7 @@ class BVHModel(KinematicModel):
         root_position_sr = cur_frame[[self.root_name + '_' + pos for pos in self.skeleton[self.root_name]['channels'][:3]]]
         root_position = torch.Tensor(np.expand_dims(root_position_sr.values, axis=0)).T
         channel_order = self.kinematic_chain[self.root_name]['channel_order']
-        root_rotation = self._euler_to_rotation_matrix(frame_id, self.root_name, channel_order)
+        root_rotation = self._euler_to_rotation_matrix(frame_id, self.root_name, channel_order, degrees=True)
         return root_position, root_rotation
     
     def get_rotation_matrix(self, frame_id: int, joint_name: str):
@@ -72,10 +72,10 @@ class BVHModel(KinematicModel):
         if not self.skeleton[joint_name]['children']:
             return torch.eye(3)
         channel_order = self.kinematic_chain[joint_name]['channel_order']
-        rot_mat = self._euler_to_rotation_matrix(frame_id, joint_name, channel_order)
+        rot_mat = self._euler_to_rotation_matrix(frame_id, joint_name, channel_order, degrees=True)
         return rot_mat
 
-    def _euler_to_rotation_matrix(self, frame_id: int, joint_name: str, channel_order: str, degrees=True):
+    def _euler_to_rotation_matrix(self, frame_id: int, joint_name: str, channel_order: str, degrees: bool):
         """Return rotation matrix from given joint_name and frame_id by using self.motion_data
 
         Args:

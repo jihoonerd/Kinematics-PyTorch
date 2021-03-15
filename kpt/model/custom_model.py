@@ -33,17 +33,17 @@ class CustomModel(KinematicModel):
     def get_root_pos_rot(self):
         root_position = torch.unsqueeze(self.motion_data[:3], 1)
         channel_order = self.kinematic_chain[self.root_name]['channel_order']
-        root_rotation = self._euler_to_rotation_matrix(0, self.root_name, channel_order)
+        root_rotation = self._euler_to_rotation_matrix(0, self.root_name, channel_order, degrees=True)
         return root_position, root_rotation      
     
     def get_rotation_matrix(self, frame_id: int, joint_name: str):
         if not self.skeleton[joint_name]['children']:
             return torch.eye(3)
         channel_order = self.kinematic_chain[joint_name]['channel_order']
-        rot_mat = self._euler_to_rotation_matrix(frame_id, joint_name, channel_order)
+        rot_mat = self._euler_to_rotation_matrix(frame_id, joint_name, channel_order, degrees=True)
         return rot_mat
 
-    def _euler_to_rotation_matrix(self, frame_id: int, joint_name: str, channel_order: str, degrees=True):
+    def _euler_to_rotation_matrix(self, frame_id: int, joint_name: str, channel_order: str, degrees: bool):
         """Return rotation matrix from given joint_name and frame_id by using self.motion_data
         Assumes angles in motion data is defined in RADIAN.
         Args:

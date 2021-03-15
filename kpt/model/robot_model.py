@@ -17,11 +17,15 @@ class RobotModel:
             frame_id (int): Set root position and rotation at given id.
         """
         self.frame_id = frame_id
-        root_pos, root_rot = self.kinematic_model.get_root_pos_rot(frame_id)
+        if self.kinematic_model.model_type == 'bvh':
+            root_pos, root_rot = self.kinematic_model.get_root_pos_rot(frame_id)
+        elif self.kinematic_model.model_type == 'custom':
+            root_pos, root_rot = self.kinematic_model.get_root_pos_rot()
+        else:
+            raise ValueError('Undefined model type')
         self.kinematic_chain[self.kinematic_model.root_name]['p'] = root_pos
         self.kinematic_chain[self.kinematic_model.root_name]['R'] = root_rot
         
-    
     def forward_kinematics(self, joint_name):
         """Solve forward kinematics from given joint name."""
         if not self.kinematic_chain[joint_name]: # For end of kinematic chain.
