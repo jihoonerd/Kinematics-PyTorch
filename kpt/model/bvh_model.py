@@ -5,7 +5,6 @@ import torch
 from kpt.model.kinematic_model import KinematicModel
 from pymo.parsers import BVHParser
 from pytorch3d.transforms import euler_angles_to_matrix
-from scipy.spatial.transform import Rotation
 
 
 class BVHModel(KinematicModel):
@@ -92,19 +91,24 @@ class BVHModel(KinematicModel):
         """        
         cur_frame = self.motion_data.iloc[frame_id]
         rot_cols = [joint_name + '_' + channel for channel in ['Xrotation', 'Yrotation', 'Zrotation']]
-        
-        x_rot = Rotation.from_euler('x', cur_frame[rot_cols].values[0], degrees=True).as_matrix()
-        y_rot = Rotation.from_euler('y', cur_frame[rot_cols].values[1], degrees=True).as_matrix()
-        z_rot = Rotation.from_euler('z', cur_frame[rot_cols].values[2], degrees=True).as_matrix()
 
-        rot_mat = np.eye(3)
+        base = torch.zeros((3,3))
+        base[0][0] = np.radians(cur_frame[rot_cols].values[0])
+        base[1][1] = np.radians(cur_frame[rot_cols].values[1])
+        base[2][2] = np.radians(cur_frame[rot_cols].values[2])
+
+        x_rot = euler_angles_to_matrix(base[0], convention='XYZ')
+        y_rot = euler_angles_to_matrix(base[1], convention='XYZ')
+        z_rot = euler_angles_to_matrix(base[2], convention='XYZ')
+
+        rot_mat = torch.eye(3)
         for axis in channel_order:
             if axis == 'X' :
-                rot_mat = np.matmul(rot_mat, x_rot)
+                rot_mat = torch.matmul(rot_mat, x_rot)
             elif axis == 'Y':
-                rot_mat = np.matmul(rot_mat, y_rot)
+                rot_mat = torch.matmul(rot_mat, y_rot)
             elif axis == 'Z' :
-                rot_mat = np.matmul(rot_mat, z_rot)
+                rot_mat = torch.matmul(rot_mat, z_rot)
             else:
                 raise ValueError(f'Wrong channel order given (Capital Only): {channel_order}')
-        return torch.Tensor(rot_mat)
+        return rot_mat

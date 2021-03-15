@@ -10,7 +10,7 @@ class RobotModel:
         self.kinematic_chain = self.kinematic_model.kinematic_chain
         self.frame_id = None
 
-    def set_frame(self, frame_id: int):
+    def set_frame(self, frame_id: int=0):
         """Kinematic chain and motion sequence should be set by this method.
 
         Args:
