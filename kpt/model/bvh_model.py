@@ -75,7 +75,7 @@ class BVHModel(KinematicModel):
         rot_mat = self._euler_to_rotation_matrix(frame_id, joint_name, channel_order)
         return rot_mat
 
-    def _euler_to_rotation_matrix(self, frame_id: int, joint_name: str, channel_order: str):
+    def _euler_to_rotation_matrix(self, frame_id: int, joint_name: str, channel_order: str, degrees=True):
         """Return rotation matrix from given joint_name and frame_id by using self.motion_data
 
         Args:
@@ -93,9 +93,12 @@ class BVHModel(KinematicModel):
         rot_cols = [joint_name + '_' + channel for channel in ['Xrotation', 'Yrotation', 'Zrotation']]
 
         base = torch.zeros((3,3))
-        base[0][0] = np.radians(cur_frame[rot_cols].values[0])
-        base[1][1] = np.radians(cur_frame[rot_cols].values[1])
-        base[2][2] = np.radians(cur_frame[rot_cols].values[2])
+        base[0][0] = cur_frame[rot_cols].values[0]
+        base[1][1] = cur_frame[rot_cols].values[1]
+        base[2][2] = cur_frame[rot_cols].values[2]
+
+        if degrees:
+            base = torch.deg2rad(base)
 
         x_rot = euler_angles_to_matrix(base[0], convention='XYZ')
         y_rot = euler_angles_to_matrix(base[1], convention='XYZ')
