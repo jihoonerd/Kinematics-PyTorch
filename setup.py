@@ -6,5 +6,10 @@ setup(name='kpt',
       author='Jihoon Kim',
       author_email='jihoon_kim@outlook.com',
       url='https://github.com/jihoonerd/Kinematics-PyTorch',
-      packages=['kpt', 'kpt.model', 'kpt.vis'],
+      packages=['kpt', 'kpt.model'],
+      install_requires=[
+        'numpy',
+        'torch',
+        'pytorch3d'
+      ]
 )
