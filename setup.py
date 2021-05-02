@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(name='kpt',
-      version='0.0.1',
+      version='0.0.7',
       description='Kinematics with PyTorch',
       long_description=long_description,
       long_description_content_type="text/markdown",

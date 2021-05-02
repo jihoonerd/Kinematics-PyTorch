@@ -83,5 +83,6 @@ class TorchSkeleton:
                 position_arr_w.append(torch.matmul(quaternion_to_matrix(rotation_arr_w[parent_idx]), self.offset_arr[joint_idx, :]) + position_arr_w[parent_idx])
                 rotation_arr_w.append(matrix_to_quaternion(torch.matmul(quaternion_to_matrix(rotation_arr_w[parent_idx]), quaternion_to_matrix(rotations[:, joint_idx, :]))))  
         position_tensor_w = torch.stack(position_arr_w, dim=2).permute(0,2,1)
-        return position_tensor_w
+        rotation_tensor_w = torch.stack(rotation_arr_w, dim=2).permute(0,2,1)
+        return position_tensor_w, rotation_tensor_w
 
