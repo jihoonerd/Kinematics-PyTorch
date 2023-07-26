@@ -15,7 +15,7 @@ PyYAML==5.4.1
 tabulate==0.8.9
 termcolor==1.1.0
 toml==0.10.2
-torch==1.8.1+cpu
+torch==1.13.1
 torchaudio==0.8.1
 torchvision==0.9.1+cpu
 tqdm==4.60.0
