@@ -4,7 +4,7 @@ iniconfig==1.1.1
 iopath==0.1.8
 numpy==1.22.0
 packaging==20.9
-Pillow==10.2.0
+Pillow==10.3.0
 pluggy==0.13.1
 portalocker==2.3.0
 py==1.10.0
