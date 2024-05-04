@@ -18,6 +18,6 @@ toml==0.10.2
 torch==1.13.1
 torchaudio==0.8.1
 torchvision==0.9.1+cpu
-tqdm==4.60.0
+tqdm==4.66.3
 typing-extensions==3.10.0.0
 yacs==0.1.8
